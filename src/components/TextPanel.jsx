@@ -1,136 +1,344 @@
 import React, { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Type, Plus, Trash2, AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline } from 'lucide-react';
 
-const TextPanel = ({ textOverlays, setTextOverlays }) => {
-  const [selectedOverlay, setSelectedOverlay] = useState(null);
-  const [newText, setNewText] = useState('');
-
-  const addTextOverlay = () => {
-    if (!newText.trim()) return;
+const TextPanel = ({ onAddText, onUpdateText, onDeleteText, activeTextId, textElements }) => {
+  const [text, setText] = useState('');
+  const [fontSize, setFontSize] = useState(24);
+  const [fontColor, setFontColor] = useState('#ffffff');
+  const [fontWeight, setFontWeight] = useState('normal');
+  const [fontStyle, setFontStyle] = useState('normal');
+  const [textDecoration, setTextDecoration] = useState('none');
+  const [textAlign, setTextAlign] = useState('center');
+  
+  // Find active text element if any
+  const activeText = textElements.find(t => t.id === activeTextId);
+  
+  // Update local state when active text changes
+  React.useEffect(() => {
+    if (activeText) {
+      setText(activeText.text);
+      setFontSize(activeText.fontSize || 24);
+      setFontColor(activeText.color || '#ffffff');
+      setFontWeight(activeText.fontWeight || 'normal');
+      setFontStyle(activeText.fontStyle || 'normal');
+      setTextDecoration(activeText.textDecoration || 'none');
+      setTextAlign(activeText.textAlign || 'center');
+    } else {
+      // Reset to defaults if no active text
+      setText('');
+      setFontSize(24);
+      setFontColor('#ffffff');
+      setFontWeight('normal');
+      setFontStyle('normal');
+      setTextDecoration('none');
+      setTextAlign('center');
+    }
+  }, [activeText]);
+  
+  // Handle text input change
+  const handleTextChange = (e) => {
+    const newText = e.target.value;
+    setText(newText);
     
-    const newOverlay = {
-      id: Date.now(),
-      text: newText,
-      x: 50,
-      y: 50,
-      fontSize: 24,
-      color: '#ffffff',
-      fontFamily: 'Arial',
-      align: 'left'
+    if (activeTextId) {
+      onUpdateText(activeTextId, { text: newText });
+    }
+  };
+  
+  // Handle font size change
+  const handleFontSizeChange = (e) => {
+    const newSize = parseInt(e.target.value);
+    setFontSize(newSize);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { fontSize: newSize });
+    }
+  };
+  
+  // Handle font color change
+  const handleColorChange = (e) => {
+    const newColor = e.target.value;
+    setFontColor(newColor);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { color: newColor });
+    }
+  };
+  
+  // Handle text alignment change
+  const handleAlignmentChange = (alignment) => {
+    setTextAlign(alignment);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { textAlign: alignment });
+    }
+  };
+  
+  // Toggle font weight
+  const toggleFontWeight = () => {
+    const newWeight = fontWeight === 'bold' ? 'normal' : 'bold';
+    setFontWeight(newWeight);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { fontWeight: newWeight });
+    }
+  };
+  
+  // Toggle font style
+  const toggleFontStyle = () => {
+    const newStyle = fontStyle === 'italic' ? 'normal' : 'italic';
+    setFontStyle(newStyle);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { fontStyle: newStyle });
+    }
+  };
+  
+  // Toggle text decoration
+  const toggleTextDecoration = () => {
+    const newDecoration = textDecoration === 'underline' ? 'none' : 'underline';
+    setTextDecoration(newDecoration);
+    
+    if (activeTextId) {
+      onUpdateText(activeTextId, { textDecoration: newDecoration });
+    }
+  };
+  
+  // Add new text element
+  const handleAddText = () => {
+    if (!text.trim()) return;
+    
+    const newText = {
+      id: Date.now().toString(),
+      text,
+      fontSize,
+      color: fontColor,
+      fontWeight,
+      fontStyle,
+      textDecoration,
+      textAlign,
+      x: 50, // Center horizontally (percentage)
+      y: 50, // Center vertically (percentage)
     };
     
-    setTextOverlays([...textOverlays, newOverlay]);
-    setNewText('');
-    setSelectedOverlay(newOverlay.id);
+    onAddText(newText);
+    setText('');
   };
-
-  const updateOverlay = (id, updates) => {
-    setTextOverlays(overlays =>
-      overlays.map(overlay =>
-        overlay.id === id ? { ...overlay, ...updates } : overlay
-      )
-    );
+  
+  // Delete active text element
+  const handleDeleteText = () => {
+    if (activeTextId) {
+      onDeleteText(activeTextId);
+    }
   };
-
-  const removeOverlay = (id) => {
-    setTextOverlays(overlays => overlays.filter(overlay => overlay.id !== id));
-    setSelectedOverlay(null);
-  };
-
-  const selectedOverlayData = textOverlays.find(overlay => overlay.id === selectedOverlay);
-
+  
   return (
     <div className="space-y-4">
-      <h4 className="text-lg font-semibold text-white">Text Overlays</h4>
+      <h4 className="text-lg font-semibold text-white flex items-center space-x-2">
+        <Type className="w-5 h-5" />
+        <span>Text Overlay</span>
+      </h4>
       
       <div className="space-y-3">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            placeholder="Enter text..."
-            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-purple-400 focus:outline-none"
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">
+            Text Content
+          </label>
+          <textarea
+            value={text}
+            onChange={handleTextChange}
+            placeholder="Enter your text here..."
+            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-purple-400 focus:outline-none resize-none"
+            rows={2}
           />
-          <button
-            onClick={addTextOverlay}
-            className="p-2 bg-purple-500 hover:bg-purple-600 rounded-lg text-white transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
-
-        {textOverlays.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-400">Text Elements:</p>
-            {textOverlays.map((overlay) => (
-              <div
-                key={overlay.id}
-                className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors ${
-                  selectedOverlay === overlay.id
-                    ? 'bg-purple-500/20 border border-purple-400/30'
-                    : 'bg-gray-700/50 hover:bg-gray-700'
-                }`}
-                onClick={() => setSelectedOverlay(overlay.id)}
-              >
-                <span className="text-sm text-white truncate">{overlay.text}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeOverlay(overlay.id);
-                  }}
-                  className="p-1 text-red-400 hover:text-red-300"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+        
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
+              Font Size
+            </label>
+            <input
+              type="range"
+              min="12"
+              max="72"
+              value={fontSize}
+              onChange={handleFontSizeChange}
+              className="w-full accent-purple-500"
+            />
+            <div className="text-xs text-gray-400 text-center mt-1">
+              {fontSize}px
+            </div>
           </div>
-        )}
-
-        {selectedOverlayData && (
-          <div className="space-y-3 p-3 bg-gray-700/30 rounded-lg">
-            <p className="text-sm font-medium text-white">Edit Selected Text</p>
-            
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">Text</label>
+          
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">
+              Font Color
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="color"
+                value={fontColor}
+                onChange={handleColorChange}
+                className="w-8 h-8 rounded overflow-hidden cursor-pointer"
+              />
               <input
                 type="text"
-                value={selectedOverlayData.text}
-                onChange={(e) => updateOverlay(selectedOverlay, { text: e.target.value })}
-                className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
+                value={fontColor}
+                onChange={handleColorChange}
+                className="flex-1 px-3 py-1 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:border-purple-400 focus:outline-none"
               />
             </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Font Size</label>
-                <input
-                  type="range"
-                  min="12"
-                  max="72"
-                  value={selectedOverlayData.fontSize}
-                  onChange={(e) => updateOverlay(selectedOverlay, { fontSize: Number(e.target.value) })}
-                  className="w-full"
-                />
-                <span className="text-xs text-purple-400">{selectedOverlayData.fontSize}px</span>
-              </div>
-              
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Color</label>
-                <input
-                  type="color"
-                  value={selectedOverlayData.color}
-                  onChange={(e) => updateOverlay(selectedOverlay, { color: e.target.value })}
-                  className="w-full h-8 rounded border border-gray-600"
-                />
-              </div>
-            </div>
           </div>
-        )}
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={() => handleAlignmentChange('left')}
+              className={`p-2 rounded-lg ${
+                textAlign === 'left'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <AlignLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAlignmentChange('center')}
+              className={`p-2 rounded-lg ${
+                textAlign === 'center'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <AlignCenter className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAlignmentChange('right')}
+              className={`p-2 rounded-lg ${
+                textAlign === 'right'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <AlignRight className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={toggleFontWeight}
+              className={`p-2 rounded-lg ${
+                fontWeight === 'bold'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <Bold className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleFontStyle}
+              className={`p-2 rounded-lg ${
+                fontStyle === 'italic'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <Italic className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleTextDecoration}
+              className={`p-2 rounded-lg ${
+                textDecoration === 'underline'
+                  ? 'bg-purple-500/30 text-purple-300'
+                  : 'text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              <Underline className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {activeTextId ? (
+            <>
+              <button
+                onClick={handleDeleteText}
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg text-red-400 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Text</span>
+              </button>
+              
+              <button
+                onClick={() => onUpdateText(activeTextId, { 
+                  text, 
+                  fontSize, 
+                  color: fontColor,
+                  fontWeight,
+                  fontStyle,
+                  textDecoration,
+                  textAlign
+                })}
+                className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-medium text-white transition-all"
+              >
+                <span>Update Text</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleAddText}
+              disabled={!text.trim()}
+              className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg font-medium text-white transition-all disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Text</span>
+            </button>
+          )}
+        </div>
       </div>
+      
+      {textElements.length > 0 && (
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">
+            Text Elements ({textElements.length})
+          </label>
+          <div className="max-h-32 overflow-y-auto space-y-2 pr-2">
+            {textElements.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onUpdateText(item.id, null, true)} // Just select, don't update
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                  activeTextId === item.id
+                    ? 'bg-purple-500/30 border border-purple-500/50'
+                    : 'bg-gray-700 border border-gray-600 hover:border-gray-500'
+                }`}
+              >
+                <div className="truncate text-left" style={{ 
+                  color: item.color,
+                  fontWeight: item.fontWeight,
+                  fontStyle: item.fontStyle,
+                  textDecoration: item.textDecoration,
+                  fontSize: `${Math.min(item.fontSize / 2, 16)}px`
+                }}>
+                  {item.text}
+                </div>
+                <div className="text-xs text-gray-400">{item.fontSize}px</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default TextPanel;
+
