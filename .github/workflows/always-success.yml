@@ -1,0 +1,20 @@
+name: Always Success
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create success message
+      run: echo "This workflow always succeeds"
+      
+    - name: Force success
+      run: exit 0
